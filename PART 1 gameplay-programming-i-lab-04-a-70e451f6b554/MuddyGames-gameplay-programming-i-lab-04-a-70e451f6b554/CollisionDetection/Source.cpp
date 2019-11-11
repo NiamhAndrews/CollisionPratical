@@ -22,6 +22,17 @@ public:
 	}
 };
 
+class Box { 
+public: 
+	Point p; 
+	int w; 
+	int h; 
+	void print() { 
+		std::cout << "w:" << w << " h:" << h << std::endl;
+	} 
+};
+
+
 int calculate_hypotenuse(Point a, Point b) {
 	int result = 0;
 
