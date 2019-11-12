@@ -47,6 +47,8 @@ int calculate_hypotenuse(Point a, Point b) {
 	// between Point a and Point b 
 	result = sqrt(pow(x_Distance, 2) + pow(y_Distance, 2));
 
+
+
 	return result;
 }
 
@@ -77,7 +79,7 @@ int main() {
 
 
 	while (true) {
-
+		/*
 		// Point Collision check
 		if (calculate_hypotenuse(player_point, npc_point) == 0)
 		{
@@ -96,6 +98,7 @@ int main() {
 		player_point.x = rand() % 10 + 1;
 		player_point.y = rand() % 10 + 1;
 
+
 		// Circle Collision check
 		if (calculate_hypotenuse(player_circle.p, npc_circle.p) < (player_circle.r + npc_circle.r))
 		{
@@ -113,6 +116,34 @@ int main() {
 
 		player_circle.p.x = rand() % 10 + 1;
 		player_circle.p.y = rand() % 10 + 1;
+
+*/
+
+		// Circle to Point Collision check
+		if (calculate_hypotenuse(player_circle.p, npc_point) < player_circle.r)
+		{
+			std::cout << "Circle to Point Collision" << std::endl;
+			player_circle.p.print();
+			npc_point.print();
+			std::cin.get();
+		}
+		else
+		{
+			std::cout << "No Collision" << std::endl;
+			player_circle.p.print();
+			npc_point.print();
+		}
+
+		player_circle.p.x = rand() % 10 + 1;
+		player_circle.p.y = rand() % 10 + 1;
+		//player_circle.r = rand() % 2 + 1;
+
+
+
+
+
+
+		//if(box to box)    use pythagarisis theorum twice for each box, making it into 2 triangles
 
 	}
 
