@@ -15,10 +15,60 @@
 
 using namespace std;
 
+
+/*class Capsule {
+public:
+	int capLenght = 20;
+	int capRadius = 10;
+};*/
+
+
+
+
+
+
 int main()
 {
 	// Create the main window
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
+
+
+	//Capsule creation
+	int capLenght = 50;
+	int capRadius = 15;
+	sf::CircleShape capCircle1;
+	sf::CircleShape capCircle2;
+	sf::RectangleShape capRect;
+	capCircle1.setRadius(capRadius);
+	capCircle2.setRadius(capRadius);
+	capRect.setSize(sf::Vector2f((capRadius *2), capLenght));
+	capCircle1.setPosition(200, 200);
+	capCircle2.setPosition(200, (200 + capLenght) );
+	capRect.setPosition(200, (200 + capRadius));
+	capCircle1.setFillColor(sf::Color::Color(50, 168, 82));
+	capCircle2.setFillColor(sf::Color::Color(50, 168, 82));
+	capRect.setFillColor(sf::Color::Color(50, 168, 82));
+
+
+
+
+
+	//Polygon creation
+	//sf::Vector2f polyPoint1{150,150};
+	//sf::Vector2f polyPoint2{ 130,130 };
+	//sf::Vector2f polyPoint3{ 170,130 };
+	sf::Vertex polyPoint1{ sf::Vector2f{150,150}, sf::Color::Color(69, 200, 42) };
+	sf::Vertex polyPoint2{ sf::Vector2f{130,130}, sf::Color::Color(69, 200, 42) };
+	sf::Vertex polyPoint3{ sf::Vector2f{170,130}, sf::Color::Color(42, 42, 42) };
+
+	sf::Lines;
+	//???????????????????
+
+
+
+
+
+
 
 	// Load a NPC's sprites to display
 	sf::Texture npc_texture;
@@ -192,6 +242,19 @@ int main()
 
 		// Draw the NPC's Current Animated Sprite
 		window.draw(npc.getAnimatedSprite());
+
+
+		//Capsule drawing
+		window.draw(capCircle1);
+		window.draw(capCircle2);
+		window.draw(capRect);
+
+
+		//Polygon drawing
+		//window.draw(polyPoint1);
+		//window.draw(polyPoint2);
+		//window.draw(polyPoint3);
+
 
 		// Update the window
 		window.display();
