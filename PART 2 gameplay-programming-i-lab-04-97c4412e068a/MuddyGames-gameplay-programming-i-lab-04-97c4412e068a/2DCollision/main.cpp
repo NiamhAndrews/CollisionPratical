@@ -12,17 +12,9 @@
 #include <NPC.h>
 #include <Input.h>
 #include <Debug.h>
+#include <math.h>
 
 using namespace std;
-
-
-/*class Capsule {
-public:
-	int capLenght = 20;
-	int capRadius = 10;
-};*/
-
-
 
 
 
@@ -39,30 +31,79 @@ int main()
 	sf::CircleShape capCircle1;
 	sf::CircleShape capCircle2;
 	sf::RectangleShape capRect;
+
 	capCircle1.setRadius(capRadius);
 	capCircle2.setRadius(capRadius);
-	capRect.setSize(sf::Vector2f((capRadius *2), capLenght));
+	capRect.setSize(sf::Vector2f((capRadius * 2), capLenght));
+
 	capCircle1.setPosition(200, 200);
-	capCircle2.setPosition(200, (200 + capLenght) );
+	capCircle2.setPosition(200, (200 + capLenght));
 	capRect.setPosition(200, (200 + capRadius));
+
 	capCircle1.setFillColor(sf::Color::Color(50, 168, 82));
 	capCircle2.setFillColor(sf::Color::Color(50, 168, 82));
 	capRect.setFillColor(sf::Color::Color(50, 168, 82));
+
+	//Set up capsule collision
+	c2Capsule collisionCapsule;
+	collisionCapsule.a.x = capCircle1.getPosition().x + capRadius;
+	collisionCapsule.a.y = capCircle1.getPosition().y + capRadius;
+
+	collisionCapsule.b.x = capCircle2.getPosition().x + capRadius;
+	collisionCapsule.b.y = capCircle2.getPosition().y + capRadius;
+
+	collisionCapsule.r = capRadius;
 
 
 
 
 
 	//Polygon creation
-	//sf::Vector2f polyPoint1{150,150};
-	//sf::Vector2f polyPoint2{ 130,130 };
-	//sf::Vector2f polyPoint3{ 170,130 };
-	sf::Vertex polyPoint1{ sf::Vector2f{150,150}, sf::Color::Color(69, 200, 42) };
-	sf::Vertex polyPoint2{ sf::Vector2f{130,130}, sf::Color::Color(69, 200, 42) };
-	sf::Vertex polyPoint3{ sf::Vector2f{170,130}, sf::Color::Color(42, 42, 42) };
+	sf::VertexArray poly{ sf::Triangles, 3 };
+	poly.clear();
 
-	sf::Lines;
-	//???????????????????
+	sf::Vector2f position = { 300.0f, 100.0f };
+	sf::Vector2f size = { 100.0f, 100.0f };
+
+	poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color(69, 200, 42) });
+	poly.append({ {position.x + size.x, position.y + size.y}, ::Color(69, 200, 42) });
+	poly.append({ { position.x, position.y + size.y }, sf::Color(69, 200, 42) });
+
+	//Set up Poly collision
+	c2Poly collisionPoly;
+	collisionPoly.count = 3;
+	collisionPoly.verts[0] = { poly[0].position.x, poly[0].position.y };
+	collisionPoly.verts[1] = { poly[1].position.x, poly[1].position.y };
+	collisionPoly.verts[2] = { poly[2].position.x, poly[2].position.y };
+
+	c2MakePoly(&collisionPoly);
+
+
+
+
+	//Ray creation
+	sf::VertexArray ray{ sf::Lines };
+	ray.clear();
+
+	ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
+	ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
+
+	c2Ray collisionRay;
+
+	sf::Vector2f distanceVector = ray[1].position - ray[0].position;
+	float magnitude = sqrt((distanceVector.x * distanceVector.x) + (distanceVector.y * distanceVector.y));
+	sf::Vector2f unitVector = distanceVector / magnitude;
+
+	collisionRay.p = { ray[0].position.x, ray[0].position.y };
+	collisionRay.t = magnitude;
+	collisionRay.d = { unitVector.x, unitVector.y};
+
+	c2Raycast rayCast;
+
+
+
+
+
 
 
 
@@ -224,15 +265,72 @@ int main()
 		// Update the Player
 		npc.update();
 
-		// Check for collisions
-		result = c2AABBtoAABB(aabb_player, aabb_npc);
-		cout << ((result != 0) ? ("Collision") : "") << endl;
-		if (result){
+		// Check for collisions for aabb to aabb
+		if (c2AABBtoAABB(aabb_player, aabb_npc))
+		{
+			std::cout << "Collision aabb to aabb" << std::endl;
 			player.getAnimatedSprite().setColor(sf::Color(255,200,0));
 		}
-		else {
+		else
+		{
 			player.getAnimatedSprite().setColor(sf::Color(100, 255, 0));
 		}
+
+		//Check sollision for AABB to Crapsule
+		if (c2AABBtoCapsule(aabb_player, collisionCapsule))
+		{
+			std::cout << "Collision AABB to Capsule" << std::endl;
+			capCircle1.setFillColor(sf::Color(255, 200, 0));
+			capCircle2.setFillColor(sf::Color(255, 200, 0));
+			capRect.setFillColor(sf::Color(255, 200, 0));
+		}
+		else
+		{
+			capCircle1.setFillColor(sf::Color(50, 168, 82));
+			capCircle2.setFillColor(sf::Color(50, 168, 82));
+			capRect.setFillColor(sf::Color(50, 168, 82));
+		}
+
+
+		//Check collision for AABB to Polygon
+		if (c2AABBtoPoly(aabb_player, &collisionPoly, NULL))
+		{
+			std::cout << "Collision AABB to Poly" << std::endl;
+			poly.clear();
+			poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(42, 42, 42) });
+			poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(245, 99, 66) });
+			poly.append({ { position.x, position.y + size.y }, sf::Color::Color(245, 99, 66) });
+		}
+		else
+		{
+			poly.clear();
+			poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(69, 200, 42) });
+			poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(69, 200, 42) });
+			poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
+		}
+
+
+
+		//Check collision for AABB to Ray
+		if (c2CastRay(collisionRay, &aabb_player, nullptr, C2_AABB, &rayCast))
+		{
+			std::cout << "Collision AABB to Ray" << std::endl;
+			ray.clear(); 
+			ray.append({ { 650.0f, 300.0f }, sf::Color(37, 232, 250) });
+			ray.append({ { 750.0f, 100.0f }, sf::Color(250, 161, 37) });
+		}
+		else
+		{
+			ray.clear();
+			ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
+			ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
+		}
+
+
+
+
+
+
 
 		// Clear screen
 		window.clear();
@@ -251,9 +349,10 @@ int main()
 
 
 		//Polygon drawing
-		//window.draw(polyPoint1);
-		//window.draw(polyPoint2);
-		//window.draw(polyPoint3);
+		window.draw(poly);
+
+		//Ray drawing
+		window.draw(ray);
 
 
 		// Update the window
