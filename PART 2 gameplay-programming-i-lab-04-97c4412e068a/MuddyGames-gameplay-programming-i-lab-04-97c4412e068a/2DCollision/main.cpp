@@ -134,7 +134,7 @@ int main()
 	npcCirc.setFillColor(sf::Color::Color(250, 37, 186));
 	
 	c2Circle collisionCircle;
-	collisionCircle.p = { npcCirc.getPosition().x - npcRadius, npcCirc.getPosition().y + (circRadius * 2) };
+	collisionCircle.p = { npcCirc.getPosition().x + npcRadius, npcCirc.getPosition().y + (circRadius) };
 	collisionCircle.r = npcRadius;
 
 
