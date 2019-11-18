@@ -24,6 +24,14 @@ int main()
 	// Create the main window
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
 
+	bool circleActive = false;
+
+
+
+
+
+
+
 
 	//Capsule creation
 	int capLenght = 50;
@@ -107,6 +115,37 @@ int main()
 
 
 
+	//Circle shape
+	sf::CircleShape playerCirc;
+	int circRadius = 40;
+	playerCirc.setRadius(circRadius);
+	playerCirc.setPosition(400, 400);
+	playerCirc.setFillColor(sf::Color::Color(151, 37, 250));
+
+	c2Circle playerCircle;
+	playerCircle.p = { playerCirc.getPosition().x - circRadius, playerCirc.getPosition().y - circRadius };
+	playerCircle.r = circRadius;
+
+
+	sf::CircleShape npcCirc;
+	int npcRadius = 40;
+	npcCirc.setRadius(circRadius);
+	npcCirc.setPosition(500, 500);
+	npcCirc.setFillColor(sf::Color::Color(250, 37, 186));
+	
+	c2Circle collisionCircle;
+	collisionCircle.p = { npcCirc.getPosition().x - npcRadius, npcCirc.getPosition().y - circRadius };
+	collisionCircle.r = npcRadius;
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -178,7 +217,10 @@ int main()
 	{
 		// Move Sprite Follow Mouse
 		player.getAnimatedSprite().setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)));
-		
+		playerCirc.setPosition(window.mapPixelToCoords(sf::Mouse::getPosition(window)));
+		playerCircle.p.x = playerCirc.getPosition().x - playerCircle.r;
+		playerCircle.p.y = playerCirc.getPosition().y - playerCircle.r;
+
 		// Move The NPC
 		sf::Vector2f move_to(npc.getAnimatedSprite().getPosition().x + direction.x, npc.getAnimatedSprite().getPosition().y + direction.y);
 
@@ -236,7 +278,11 @@ int main()
 				// Close window : exit
 				window.close();
 				break;
-			case sf::Event::KeyPressed:
+			case sf::Event::KeyPressed:				
+				if (sf::Keyboard::Space == event.key.code)
+				{
+					circleActive = !circleActive;
+				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 				{
 					input.setCurrent(Input::Action::LEFT);
@@ -249,6 +295,8 @@ int main()
 				{
 					input.setCurrent(Input::Action::UP);
 				}
+
+
 				break;
 			default:
 				input.setCurrent(Input::Action::IDLE);
@@ -265,69 +313,92 @@ int main()
 		// Update the Player
 		npc.update();
 
-		// Check for collisions for aabb to aabb
-		if (c2AABBtoAABB(aabb_player, aabb_npc))
+
+		if (!circleActive)
 		{
-			std::cout << "Collision aabb to aabb" << std::endl;
-			player.getAnimatedSprite().setColor(sf::Color(255,200,0));
+
+			// Check for collisions for aabb to aabb
+			if (c2AABBtoAABB(aabb_player, aabb_npc))
+			{
+				std::cout << "Collision aabb to aabb" << std::endl;
+				player.getAnimatedSprite().setColor(sf::Color(255, 200, 0));
+			}
+			else
+			{
+				player.getAnimatedSprite().setColor(sf::Color(100, 255, 0));
+			}
+
+			//Check sollision for AABB to Crapsule
+			if (c2AABBtoCapsule(aabb_player, collisionCapsule))
+			{
+				std::cout << "Collision AABB to Capsule" << std::endl;
+				capCircle1.setFillColor(sf::Color(255, 200, 0));
+				capCircle2.setFillColor(sf::Color(255, 200, 0));
+				capRect.setFillColor(sf::Color(255, 200, 0));
+			}
+			else
+			{
+				capCircle1.setFillColor(sf::Color(50, 168, 82));
+				capCircle2.setFillColor(sf::Color(50, 168, 82));
+				capRect.setFillColor(sf::Color(50, 168, 82));
+			}
+
+
+			//Check collision for AABB to Polygon
+			if (c2AABBtoPoly(aabb_player, &collisionPoly, NULL))
+			{
+				std::cout << "Collision AABB to Poly" << std::endl;
+				poly.clear();
+				poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(42, 42, 42) });
+				poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(245, 99, 66) });
+				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(245, 99, 66) });
+			}
+			else
+			{
+				poly.clear();
+				poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(69, 200, 42) });
+				poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(69, 200, 42) });
+				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
+			}
+
+
+
+			//Check collision for AABB to Ray
+			if (c2CastRay(collisionRay, &aabb_player, nullptr, C2_AABB, &rayCast))
+			{
+				std::cout << "Collision AABB to Ray" << std::endl;
+				ray.clear();
+				ray.append({ { 650.0f, 300.0f }, sf::Color(37, 232, 250) });
+				ray.append({ { 750.0f, 100.0f }, sf::Color(250, 161, 37) });
+			}
+			else
+			{
+				ray.clear();
+				ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
+				ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
+			}
 		}
 		else
 		{
-			player.getAnimatedSprite().setColor(sf::Color(100, 255, 0));
+			//Check collisison for CIRCLE to Circle
+			if (c2CircletoCircle(playerCircle, collisionCircle))
+			{
+				std::cout << "Collision CIRCLE to Circle" << std::endl;
+
+
+				npcCirc.setFillColor(sf::Color(252, 118, 111));
+			}
+			else
+			{
+				npcCirc.setFillColor(sf::Color::Color(250, 37, 186));
+			}
+
+
+
+			//Check collision for Circle to AABB
+			//if(c2CircletoAABB(playerCircle, aabb_npc))
+
 		}
-
-		//Check sollision for AABB to Crapsule
-		if (c2AABBtoCapsule(aabb_player, collisionCapsule))
-		{
-			std::cout << "Collision AABB to Capsule" << std::endl;
-			capCircle1.setFillColor(sf::Color(255, 200, 0));
-			capCircle2.setFillColor(sf::Color(255, 200, 0));
-			capRect.setFillColor(sf::Color(255, 200, 0));
-		}
-		else
-		{
-			capCircle1.setFillColor(sf::Color(50, 168, 82));
-			capCircle2.setFillColor(sf::Color(50, 168, 82));
-			capRect.setFillColor(sf::Color(50, 168, 82));
-		}
-
-
-		//Check collision for AABB to Polygon
-		if (c2AABBtoPoly(aabb_player, &collisionPoly, NULL))
-		{
-			std::cout << "Collision AABB to Poly" << std::endl;
-			poly.clear();
-			poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(42, 42, 42) });
-			poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(245, 99, 66) });
-			poly.append({ { position.x, position.y + size.y }, sf::Color::Color(245, 99, 66) });
-		}
-		else
-		{
-			poly.clear();
-			poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(69, 200, 42) });
-			poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(69, 200, 42) });
-			poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
-		}
-
-
-
-		//Check collision for AABB to Ray
-		if (c2CastRay(collisionRay, &aabb_player, nullptr, C2_AABB, &rayCast))
-		{
-			std::cout << "Collision AABB to Ray" << std::endl;
-			ray.clear(); 
-			ray.append({ { 650.0f, 300.0f }, sf::Color(37, 232, 250) });
-			ray.append({ { 750.0f, 100.0f }, sf::Color(250, 161, 37) });
-		}
-		else
-		{
-			ray.clear();
-			ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
-			ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
-		}
-
-
-
 
 
 
@@ -335,8 +406,18 @@ int main()
 		// Clear screen
 		window.clear();
 
-		// Draw the Players Current Animated Sprite
-		window.draw(player.getAnimatedSprite());
+
+
+		if (circleActive == false)
+		{
+			// Draw the Players Current Animated Sprite
+			window.draw(player.getAnimatedSprite());
+		}
+		else
+		{
+			window.draw(playerCirc);
+		}
+
 
 		// Draw the NPC's Current Animated Sprite
 		window.draw(npc.getAnimatedSprite());
@@ -353,6 +434,12 @@ int main()
 
 		//Ray drawing
 		window.draw(ray);
+
+		//Circle drawing
+
+		window.draw(npcCirc);
+
+
 
 
 		// Update the window
