@@ -25,7 +25,7 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
 
 	bool circleActive = false;
-
+	bool rayActive = false;
 
 
 
@@ -109,9 +109,21 @@ int main()
 	c2Raycast rayCast;
 
 
+	sf::VertexArray plrRay{ sf::Lines };
+	plrRay.clear();
 
+	plrRay.append({ { 850.0f, 400.0f }, sf::Color(252, 3, 61) });
+	plrRay.append({ { 750.0f, 200.0f }, sf::Color(3, 165, 252) });
 
+	c2Ray playerRay;
 
+	sf::Vector2f distanceVector2 = plrRay[1].position - plrRay[0].position;
+	float magnitude2 = sqrt((distanceVector2.x * distanceVector2.x) + (distanceVector2.y * distanceVector2.y));
+	sf::Vector2f unitVector2 = distanceVector2 / magnitude2;
+
+	playerRay.p = { plrRay[0].position.x, plrRay[0].position.y };
+	playerRay.t = magnitude2;
+	playerRay.d = { unitVector2.x, unitVector2.y };
 
 
 
@@ -221,6 +233,21 @@ int main()
 		playerCircle.p.x = playerCirc.getPosition().x + playerCircle.r;
 		playerCircle.p.y = playerCirc.getPosition().y + playerCircle.r;
 
+		// Move the ray
+		plrRay.clear();
+		plrRay.append({ { 400.0f, 400.0f }, sf::Color(3, 165, 252) });
+		plrRay.append({ window.mapPixelToCoords(sf::Mouse::getPosition(window)), sf::Color(252, 3, 61) });
+
+		distanceVector2 = plrRay[1].position - plrRay[0].position;
+		magnitude2 = sqrt((distanceVector2.x * distanceVector2.x) + (distanceVector2.y * distanceVector2.y));
+		unitVector2 = distanceVector2 / magnitude2;
+
+		playerRay.p = { plrRay[0].position.x, plrRay[0].position.y };
+		playerRay.t = magnitude2;
+		playerRay.d = { unitVector2.x, unitVector2.y };
+
+
+
 		// Move The NPC
 		sf::Vector2f move_to(npc.getAnimatedSprite().getPosition().x + direction.x, npc.getAnimatedSprite().getPosition().y + direction.y);
 
@@ -282,6 +309,10 @@ int main()
 				if (sf::Keyboard::Space == event.key.code)
 				{
 					circleActive = !circleActive;
+				}
+				if (sf::Keyboard::R == event.key.code)
+				{
+					rayActive = !rayActive;
 				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 				{
@@ -361,7 +392,7 @@ int main()
 				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
 			}
 
-
+			
 
 			//Check collision for AABB to Ray
 			if (c2CastRay(collisionRay, &aabb_player, nullptr, C2_AABB, &rayCast))
@@ -377,6 +408,65 @@ int main()
 				ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
 				ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
 			}
+
+
+		}
+		else if (rayActive == true)
+		{
+			// Check for collisions for Ray to AABB
+			if (c2RaytoAABB(playerRay, aabb_npc, &rayCast))
+			{
+				std::cout << "Collision RAY to AABB" << std::endl;
+			}
+
+			//Check collision for Ray to Capsule
+			if (c2RaytoCapsule(playerRay,collisionCapsule, &rayCast))
+			{
+				std::cout << "Collision RAY to Capsule" << std::endl;
+				capCircle1.setFillColor(sf::Color(255, 200, 0));
+				capCircle2.setFillColor(sf::Color(255, 200, 0));
+				capRect.setFillColor(sf::Color(255, 200, 0));
+			}
+			else
+			{
+				capCircle1.setFillColor(sf::Color(50, 168, 82));
+				capCircle2.setFillColor(sf::Color(50, 168, 82));
+				capRect.setFillColor(sf::Color(50, 168, 82));
+			}
+
+
+			//Check collisison for Ray to Circle
+			if (c2RaytoCircle(playerRay, collisionCircle, &rayCast))
+			{
+				std::cout << "Collision RAY to Circle" << std::endl;
+				npcCirc.setFillColor(sf::Color(252, 118, 111));
+			}
+			else
+			{
+				npcCirc.setFillColor(sf::Color::Color(250, 37, 186));
+			}
+
+
+
+			//Check collision for Ray to Polygon
+			if (c2RaytoPoly(playerRay, &collisionPoly, NULL, &rayCast))
+			{
+				std::cout << "Collision Ray to Poly" << std::endl;
+				poly.clear();
+				poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(42, 42, 42) });
+				poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(245, 99, 66) });
+				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(245, 99, 66) });
+			}
+			else
+			{
+				poly.clear();
+				poly.append({ {position.x + (size.x / 2.0f), position.y}, sf::Color::Color(69, 200, 42) });
+				poly.append({ {position.x + size.x, position.y + size.y}, sf::Color::Color(69, 200, 42) });
+				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
+			}
+
+
+
 		}
 		else //If circle IS active
 		{
@@ -436,8 +526,9 @@ int main()
 				poly.append({ { position.x, position.y + size.y }, sf::Color::Color(42, 42, 42) });
 			}
 
+			
 			//Check collision for Circle to Ray
-			if (c2CastRay(collisionRay, &playerCircle, nullptr, C2_AABB, &rayCast))
+			if (c2CastRay(collisionRay, &playerCircle, nullptr, C2_CIRCLE, &rayCast))
 			{
 				std::cout << "Collision CIRCLE to Ray" << std::endl;
 				ray.clear();
@@ -449,11 +540,10 @@ int main()
 				ray.clear();
 				ray.append({ { 650.0f, 300.0f }, sf::Color(250, 161, 37) });
 				ray.append({ { 750.0f, 100.0f }, sf::Color(37, 232, 250) });
-			}
-
-
-
+			} 
 		}
+
+
 
 
 
@@ -462,16 +552,23 @@ int main()
 		window.clear();
 
 
-
+		//Game collision states
 		if (circleActive == false)
 		{
 			// Draw the Players Current Animated Sprite
 			window.draw(player.getAnimatedSprite());
 		}
+		else if (rayActive == true)
+		{
+			//Draw the player ray
+			window.draw(plrRay);
+		}
 		else
 		{
+			//Draw the player circle
 			window.draw(playerCirc);
 		}
+		
 
 
 		// Draw the NPC's Current Animated Sprite
@@ -491,7 +588,6 @@ int main()
 		window.draw(ray);
 
 		//Circle drawing
-
 		window.draw(npcCirc);
 
 
